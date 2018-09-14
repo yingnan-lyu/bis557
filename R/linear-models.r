@@ -16,6 +16,7 @@ linear_model <- function(formula, data) {
   y_name <- strsplit(as.character(formula)," ~ ")[[2]]
   y <- as.matrix(data[y_name])
   beta_hat <- solve(t(X) %*% X) %*% t(X) %*% y
+  
 
   coeff <- round(as.numeric(beta_hat),15)
   names(coeff) <- rownames(beta_hat)
