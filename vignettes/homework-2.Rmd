@@ -1,0 +1,128 @@
+---
+title: "An example vignette"
+author: "Vignette Author"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{An example vignette }
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+Vignettes are long form documentation commonly included in packages. Because they are part of the distribution of the package, they need to be as compact as possible. The `html_vignette` output type provides a custom style sheet (and tweaks some options) to ensure that the resulting html is as small as possible. The `html_vignette` format:
+
+- Never uses retina figures
+- Has a smaller default figure size
+- Uses a custom CSS stylesheet instead of the default Twitter Bootstrap style
+
+## Load the library and calculate
+
+```{r}
+library(tibble)
+library(ggplot2)
+library(dplyr)
+#library(googlesheets)
+library(readr)
+
+options(pillar.sigfig = 10)
+
+ncd <- function(x, y, compressor="gzip") {
+  cxy <- as.numeric(object.size(memCompress(c(x, y), type=compressor)))
+  cx <- as.numeric(object.size(memCompress(x, type=compressor)))
+  cy <- as.numeric(object.size(memCompress(y, type=compressor)))
+  ( cxy - min(cx, cy) ) / max(cx, cy)
+}
+```
+
+## Show the google docs code
+
+```{r, eval=FALSE}
+ github_accounts <- gs_title("BIS 557 Github Accounts") %>% 
+   gs_read("Sheet1") %>% 
+   `$`("Github Account") %>%
+   na.omit
+
+ urls <- sprintf(
+   "https://raw.githubusercontent.com/%s/bis557/master/R/linear-models.r",
+   github_accounts)
+
+ code <- vapply(urls, 
+   function(x) {
+     tryCatch(
+       paste(readLines(url(x)), collapse=" "),
+       error = function(e) as.character(NA))
+   }, "")
+
+ x <- tibble(user = github_accounts, code = code) %>% 
+   na.omit %>% 
+   write_csv("homework-code.csv")
+```
+
+```{r, echo=FALSE, message=FALSE}
+x <- read_csv("homework-code.csv")
+```
+
+## Show the ditribution in the ncd space
+
+```{r}
+# Users with no submission:
+x$user[is.na(x$code)]
+
+dists <- matrix(NA, nrow(x), nrow(x))
+
+for (i in 1:nrow(x)) {
+  for (j in 1:nrow(x)) {
+    dists[i, j] <- ncd(x$code[i], x$code[j])
+  }
+}
+rownames(dists) <- colnames(dists) <- x$user
+dists <- as.dist(dists)
+
+mds <- cmdscale(dists, k=1) 
+
+out <- tibble(user = rownames(mds), x1 = mds[,1]) %>% arrange(x1)
+
+ggplot(out, aes(x = x1)) + geom_density() + theme_minimal()
+```
+
+## Vignette Info
+
+Note the various macros within the `vignette` section of the metadata block above. These are required in order to instruct R how to build the vignette. Note that you should change the `title` field and the `\VignetteIndexEntry` to match the title of your vignette.
+
+## Styles
+
+The `html_vignette` template includes a basic CSS theme. To override this theme you can specify your own CSS in the document metadata as follows:
+
+    output: 
+      rmarkdown::html_vignette:
+        css: mystyles.css
+
+## Figures
+
+The figure sizes have been customised so that you can easily put two images side-by-side. 
+
+```{r, fig.show='hold'}
+plot(1:10)
+plot(10:1)
+```
+
+You can enable figure captions by `fig_caption: yes` in YAML:
+
+    output:
+      rmarkdown::html_vignette:
+        fig_caption: yes
+
+Then you can use the chunk option `fig.cap = "Your figure caption."` in **knitr**.
+
+## More Examples
+
+You can write math expressions, e.g. $Y = X\beta + \epsilon$, footnotes^[A footnote here.], and tables, e.g. using `knitr::kable()`.
+
+```{r, echo=FALSE, results='asis'}
+knitr::kable(head(mtcars, 10))
+```
+
+Also a quote using `>`:
+
+> "He who gives up [code] safety for [code] speed deserves neither."
+([via](https://twitter.com/hadleywickham/status/504368538874703872))
