@@ -19,5 +19,4 @@ This function passes parameters to the lm function.
 }
 \examples{
 fit <- linear_model(Sepal.Length ~., iris)
-summary(fit)
 }
