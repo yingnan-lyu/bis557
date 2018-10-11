@@ -6,7 +6,7 @@
 #' @param data a data.frame
 #' @param lambda a numeric parameter
 #' @return An ridge_reg object
-#' @import stats MASS 
+#' @import stats MASS graphics
 #' @examples
 #' fit <- ridge_reg(Sepal.Length ~., 1.2, iris)
 #' @export

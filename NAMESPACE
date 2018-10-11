@@ -3,4 +3,5 @@
 export(linear_model)
 export(ridge_reg)
 import(MASS)
+import(graphics)
 import(stats)
