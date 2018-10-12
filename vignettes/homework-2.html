@@ -176,8 +176,8 @@ log.range &lt;- ceiling(log(range, base = 10))
 log.lambdas.range &lt;- log.range + c(-2, 2)
 log.lambdas.range</code></pre>
 <pre><code>## [1] -3  2</code></pre>
-<p>The range of lambda at log scale is found to be from -3 to 2.</p>
-<p>Next, a sequence of lambda values are defined based the <span class="math inline">\(\lambda\)</span> range found. And out-of-sample MSE for each of the <span class="math inline">\(\lambda\)</span> value is calculated and plotted against log(<span class="math inline">\(\lambda\)</span>). Out-of-sample MSE decrease with the log(<span class="math inline">\(\lambda\)</span>) first and then gradually increase.</p>
+<p>The range of <span class="math inline">\(\lambda\)</span> at log scale is found to be from -3 to 2.</p>
+<p>Next, a sequence of <span class="math inline">\(\lambda\)</span> values are defined based the <span class="math inline">\(\lambda\)</span> range found. And out-of-sample MSE for each of the <span class="math inline">\(\lambda\)</span> value is calculated and plotted against log(<span class="math inline">\(\lambda\)</span>). Out-of-sample MSE decrease with the log(<span class="math inline">\(\lambda\)</span>) first and then gradually increase.</p>
 <pre class="r"><code># Define lambdas over the range
 log.lambdas &lt;- seq(log.lambdas.range[1], log.lambdas.range[2], by = 0.01)
 lambdas &lt;- 10^log.lambdas

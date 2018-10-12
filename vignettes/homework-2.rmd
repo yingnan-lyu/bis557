@@ -58,9 +58,9 @@ log.lambdas.range <- log.range + c(-2, 2)
 log.lambdas.range
 ```
 
-The range of lambda at log scale is found to be from -3 to 2. 
+The range of $\lambda$ at log scale is found to be from -3 to 2. 
 
-Next, a sequence of lambda values are defined based the $\lambda$ range found. And out-of-sample MSE for each of the $\lambda$ value is calculated and plotted against log($\lambda$). Out-of-sample MSE decrease with the log($\lambda$) first and then gradually increase. 
+Next, a sequence of $\lambda$ values are defined based the $\lambda$ range found. And out-of-sample MSE for each of the $\lambda$ value is calculated and plotted against log($\lambda$). Out-of-sample MSE decrease with the log($\lambda$) first and then gradually increase. 
 
 ```{r}
 # Define lambdas over the range
