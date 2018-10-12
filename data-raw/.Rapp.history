@@ -1,1 +1,331 @@
-lambda <- 1.2121212
+swirl()
+library(swirl)
+swirl()
+Sys.Date()
+mean (c(2,4,5))
+submit()
+boring_function('My first function!')
+boring_function
+submit()
+my_mean(c(4, 5, 10))
+submit()
+play()
+7%%2
+nxt()
+submit()
+reminder(5)
+remainder(5)
+remainder(11, 5)
+remainder(divisor = 11, num = 5)
+remainder(4, div = 2)
+args(remainder)
+submit()
+std(c(1.4, 3.6, 7.9, 8.8))
+evaluate(sd, c(1.4, 3.6, 7.9, 8.8))
+evaluate(function(x){x+1}, 6)
+evaluate(function(x){x[1]}, c(8, 4, 0))
+evaluate(function(x){x[3]}, c(8, 4, 0))
+evaluate(function(x){x[length(x)]}, c(8, 4, 0))
+?paste
+paste("Programming", "is", "fun!")
+submit()
+submit
+submit()
+submit
+submit()
+play()
+telegram <- function(sent, sep = " ", collapse = NULL){#
+  paste("START", sent, "STOP")#
+}
+telegram("Hi")
+nxt()
+submit()
+telegram("I", "am", "a", "bit", "sad", "but", "I", "know", "it", "would", "not","last", "for", "long")
+submit()
+x = rbing(c("place", "adjective", "noun"),(1,2,3))
+x = rbing(c("place", "adjective", "noun"),c(1,2,3))
+x = rbind(c("place", "adjective", "noun"),c(1,2,3))
+mad_libs(x)
+submit()
+'I' %p% 'love' %p% 'R!'
+?readlines
+?readLines
+times <- "12:21 11:10"
+ll <- "12:21 11:10"
+l <- "12:21 11:10"
+ll = strsplit(l, " ")
+ll
+ll = strsplit(l, " ")[[1]]
+ll[1]
+strsplit(ll[1], "")
+strsplit(ll[1], "")[[1]]
+digits <- strsplit(ll[1], "")[[1]]
+digits <- strsplit(time, "")[[1]]
+time <- ll[1]
+time
+digits
+l <- "12:21 11:10"#
+ll = strsplit(l, " ")[[1]]#
+for(time in ll){#
+	digits <- strsplit(time, "")[[1]]#
+	if ((digits[1] == digits[3] & digits[2] == digits[4]) |#
+	     digits[1] == digits[2] & digits[3] == digits[4]) |#
+	     digits[1] == digits[4] & digits[2] == digits[3]))#
+    sum = sum + 1;#
+}
+l <- "12:21 11:10"#
+ll = strsplit(l, " ")[[1]]#
+for(time in ll){#
+	digits <- strsplit(time, "")[[1]]#
+	if ((digits[1] == digits[3] & digits[2] == digits[4]) |#
+	    (digits[1] == digits[2] & digits[3] == digits[4]) |#
+	    (digits[1] == digits[4] & digits[2] == digits[3])) {#
+	    	sum = sum + 1;#
+	    }#
+}
+sum = 0 #
+#
+l <- "12:21 11:10"#
+ll = strsplit(l, " ")[[1]]#
+for(time in ll){#
+	digits <- strsplit(time, "")[[1]]#
+	if ((digits[1] == digits[3] & digits[2] == digits[4]) |#
+	    (digits[1] == digits[2] & digits[3] == digits[4]) |#
+	    (digits[1] == digits[4] & digits[2] == digits[3])) {#
+	    	sum = sum + 1;#
+	    }#
+}
+sum
+ll
+ll[1]
+digits <- strsplit(ll[1], "")
+digits
+sum = 0 #
+#
+l <- "12:21 11:10"#
+ll = strsplit(l, " ")[[1]]#
+for(time in ll){#
+	digits <- strsplit(time, "")[[1]]#
+	if ((digits[1] == digits[4] & digits[2] == digits[5]) |#
+	    (digits[1] == digits[2] & digits[4] == digits[5]) |#
+	    (digits[1] == digits[5] & digits[2] == digits[4])) {#
+	    	sum = sum + 1;#
+	    }#
+}
+sum
+2^(1:100)
+2 %in% 2^(1:100)
+seq(1, 2^63-1, by=2)
+seq(1, 2^63-1, by=200)
+seq(1, 2^63-1, by=2000000)
+?seq
+seq(1, 5, by=2)
+even = n/odd
+n=10#
+odd=1
+n=10#
+odd=3
+even = n/odd
+even
+is.integer(even)
+is.integer(10/5)
+10/5
+is.integer(10/5)
+even <- 10/5
+is.integer(even)
+even/2
+is.integer(even/2)
+(even/2) %in% (1:63)
+n=10#
+odd=3#
+if (odd < 2^63) {#
+	even = n/odd#
+	if (even/2 %in% (1:63)) {#
+		cat(c(odd, even))#
+	}#
+	else {#
+		cat("No")#
+	}#
+}
+c(odd, even)
+n=10#
+odd=3#
+if (odd < 2^63) {#
+	even = n/odd#
+	if (even/2 %in% (1:63)) {#
+		return(c(odd, even))#
+	}#
+	else {#
+		return("No")#
+	}#
+}
+n=10#
+odd=3#
+if (odd < 2^63) {#
+	even = n/odd#
+	if (even/2 %in% (1:63)) {#
+		print(c(odd, even))#
+	}#
+	else {#
+		print("No")#
+	}#
+}
+even
+even/2 %in% (1:63)
+(even/2) %in% (1:63)
+n=10#
+odd=3#
+if (odd < 2^63) {#
+	even = n/odd#
+	if ((even/2) %in% (1:63)) {#
+		print(c(odd, even))#
+	}#
+	else {#
+		print("No")#
+	}#
+}
+n=10#
+odd=3#
+if (odd < 2^63) {#
+	even = n/odd#
+	if ((even/2) %in% (1:63)) {#
+		print(c(odd, even))#
+	}#
+	else {#
+		print("No")#
+	}#
+	odd = odd + 2#
+	if (odd > 2^63) {#
+		break#
+	}#
+}
+n=10#
+odd=3#
+if (odd < 2^63) {#
+	if (odd < 2^63) {#
+	even = n/odd#
+	if ((even/2) %in% (1:63)) {#
+		print(c(odd, even))#
+	}#
+	else {#
+		print("No")#
+	}#
+	odd = odd + 2#
+    }#
+}
+n=10#
+odd=3#
+#
+while (odd < 2^63) {#
+	even = n/odd#
+	if ((even/2) %in% (1:63)) {#
+		print(c(odd, even))#
+	}#
+	else {#
+		print("No")#
+	}#
+	odd = odd + 2#
+}
+n=10#
+odd=3#
+#
+while (odd < 2^63) {#
+	even = n/odd#
+	if ((even/2) %in% (1:63)) {#
+		print(c(odd, even))#
+	}#
+	else {#
+		print("No")#
+	}#
+	odd = odd + 2#
+	if (odd >= n) {#
+		break#
+	}#
+}
+n=10#
+odd=3#
+#
+while (odd < 2^63) {#
+	even = n/odd#
+	if ((even/2) %in% (1:63)) {#
+		result = c(odd, even)#
+	}#
+	else {#
+		result = "No"#
+	}#
+	odd = odd + 2#
+	if (odd >= n) {#
+		break#
+	}#
+}#
+cat(result)
+n=10#
+odd=3#
+#
+while (odd < 2^63) {#
+	even = n/odd#
+	if ((even/2) %in% (1:63)) {#
+		result = c(odd, even)#
+		break#
+	}#
+	else {#
+		result = "No"#
+	}#
+	odd = odd + 2#
+	if (odd >= n) {#
+		break#
+	}#
+}#
+cat(result)
+n=100#
+odd=3#
+#
+while (odd < 2^63) {#
+	even = n/odd#
+	if ((even/2) %in% (1:63)) {#
+		result = c(odd, even)#
+		break#
+	}#
+	else {#
+		result = "No"#
+	}#
+	odd = odd + 2#
+	if (odd >= n) {#
+		break#
+	}#
+}#
+cat(result)
+n=3#
+odd=3#
+#
+while (odd < 2^63) {#
+	even = n/odd#
+	if ((even/2) %in% (1:63)) {#
+		result = c(odd, even)#
+		break#
+	}#
+	else {#
+		result = "No"#
+	}#
+	odd = odd + 2#
+	if (odd >= n) {#
+		break#
+	}#
+}#
+cat(result)
+library(dplyr)
+install.package("dplyr")
+install.packages("dplyr")
+library(dplyr)
+library(devtools)
+install()
+devtools::install()
+lm_patho <- read.csv("df.csv")
+setwd("~/Documents/Master2-2/BIS 557-Computational Statistics/bis557/data-raw")
+lm_patho <- read.csv("df.csv")
+save(lm_patho, file = "../data/lm_patho.rda")
+ridge_test <- read.csv("ridge_test.csv")
+save(ridge_test, file = "../data/ridge_test.rda")
+ridge_train <- read.csv("ridge_train.csv")#
+dir.create("../data")#
+save(ridge_train, file = "../data/ridge_train.rda")

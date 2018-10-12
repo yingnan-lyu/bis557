@@ -16,29 +16,55 @@ output:
 
 ## The ridge_reg function
 
-Create a vignette, called homework-2, that looks at effect on the out-of-sample mean square error as $\lambda$ varies. Reasonable values can be inferred from the range of the singular values of the training data as
-shown in Equation 3.29 in the book. Note that it makes sense to select $\lambda$ values on the log scale.
+This vignette uses ridge_reg function and looks at effect on the out-of-sample mean square error in the ridge regression as $\lambda$ varies. 
+
+First, define a function that calculate out-of-sample mean squared error. 
 
 ```{r}
 library(bis557)
 
-data("ridge_train")
-data("ridge_test")
-
+# A function to calculate MSE for ridge regression
 ridge_mse <- function(formula, lambda, data.train, data.test) {
+  
+  # Calculate beta from trainning data
   fit_ridge <- ridge_reg(formula, lambda, data.train)
   beta <- fit_ridge$coef
+  
+  # Calculate y_hat from testing data
   x_test <- model.matrix(formula, ridge_test)
   y_test <- matrix(data.test[,as.character(formula)[2]], ncol=1)
   y_test <- y_test[as.numeric(rownames(x_test)),, drop=FALSE]
   #y_hat <- tcrossprod(x_test, beta)
   y_hat <- x_test %*% beta
+  
+  # Calculate out-of-sample MSE
   mse <- mean((y_hat - y_test)^2)
 }
+```
 
-#lambdas <- seq(10^-5, 10^5, 1000)
-#log.lambdas <- log(lambdas, base = 10)
-log.lambdas <- seq(-5, 5, 0.1)
+Then reasonable values can be inferred from the range of the singular values of the training data as shown in Equation 3.29 in the book. The $\lambda$ values are chosen based on the log scale.
+
+```{r}
+data("ridge_train")
+data("ridge_test")
+
+# Choose lambda range
+X <- model.matrix(y ~ . - 1, ridge_train)
+svdx <- svd(X)
+d <- 1/svdx$d
+range <- c(min(d), max(d))
+log.range <- ceiling(log(range, base = 10))
+log.lambdas.range <- log.range + c(-2, 2)
+log.lambdas.range
+```
+
+The range of lambda at log scale is found to be from -3 to 2. 
+
+Next, a sequence of lambda values are defined based the $\lambda$ range found. And out-of-sample MSE for each of the $\lambda$ value is calculated and plotted against log($\lambda$). Out-of-sample MSE decrease with the log($\lambda$) first and then gradually increase. 
+
+```{r}
+# Define lambdas over the range
+log.lambdas <- seq(log.lambdas.range[1], log.lambdas.range[2], by = 0.01)
 lambdas <- 10^log.lambdas
 
 # Calculate MSE for each lambda
@@ -51,12 +77,18 @@ plot(log.lambdas, mses)
 
 # Find lambda that minimize MSE
 min.log.lambda <- log.lambdas[which.min(mses)]
+min.log.lambda
 min.lambda <- lambdas[which.min(mses)]
+min.lambda
 ```
+
+The out-of-sample MSE is minimized at log($\lambda$) = 1.48 or $lambda$ = 30.20.
+
+To find a more accurate $\lambda$, we zoom in log($\lambda$) to a smaller range, which is log($\lambda$)-0.5 to log($\lambda$)+0.5. Then out-of-sample MSEs are calculated again using the new log($\lambda$) range. 
 
 ```{r}
 # Zoom in lambda
-new.log.lambdas <- seq(min.log.lambda - 0.5, min.log.lambda + 0.5, 0.01)
+new.log.lambdas <- seq(min.log.lambda - 0.5, min.log.lambda + 0.5, 0.001)
 new.lambdas <- 10^new.log.lambdas
 
 # Calculate MSE for each lambda
@@ -69,6 +101,11 @@ plot(new.log.lambdas, new.mses)
 
 # Find lambda that minimize MSE
 min.new.log.lambda <- new.log.lambdas[which.min(new.mses)]
+min.new.log.lambda
 min.new.lambda <- new.lambdas[which.min(new.mses)]
-
+min.new.lambda
 ```
+
+Now the out-of-sample MSE is minimized at log($\lambda$) = 1.484 or $lambda$ = 30.479.
+
+
