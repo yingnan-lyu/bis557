@@ -1,0 +1,271 @@
+---
+title: "Homework 3"
+author: "Yingnan Lyu"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    self_contained: yes
+    toc: true
+---
+<!--
+%\VignetteEngine{knitr::rmarkdown}
+%\VignetteIndexEntry{The lasso regression vignette}
+%\VignetteEncoding{UTF-8}
+\usepackage[utf8]{Matrix}
+-->
+
+## Homework 3
+
+This vignette answers questions in homework 3 of BIS 557. 
+
+**1.** CASL page 117, question 7. 
+
+A function is implemented to calculate the Epanechnikov kernel and another is implemented to calculate the kernel density based on the Epanechnikov kernel. 
+
+```{r}
+# A function that calculate the Epanechnikov kernel
+kernel_epan <- function(x, h = 1) {
+  x <- x / h
+  ran <- as.numeric(abs(x) <= 1)
+  val <- (1/h) * (3/4) * (1 - x^2) * ran
+  return(val)
+}
+
+# A function that calculate the kernel density
+# Inputs: x, a training vector; h, bandwidth; x_new, a test set
+# Output: the kernel density estimate from the Epanchnikov kernel
+kern_density <- function(x, h, x_new) {
+  sapply(x_new, function(xi) {
+    kh <- kernel_epan((x - xi), h = h)
+    f <- sum(kh)/length(x)
+    f
+  })
+}
+```
+
+Then generate a set of x from uniform distribution U(0,1). Use bandwidth 0.05, 0.5 and 1 respectively and plot the kernel density against x.
+
+```{r}
+# Test the function with hand constructed datasets and bandwidths
+set.seed(100)
+n <- 100
+x <- seq(0, 1, length.out = n)
+x_new <- runif(n)
+h <- c(0.05, 0.5, 1)
+
+sapply(h, function(hi) {
+  f_new <- kern_density(x, hi, sort(x_new))
+  plot(sort(x_new), f_new, type="l",
+       main=paste("bandwidth =", hi), xlab="x_new", ylab="Kernel Density")
+})
+```
+
+Run another test using a set of x from normal distribution N(0,1). Use bandwidth 0.05, 0.5 and 1 respectively and plot the kernel density against x.
+
+```{r}
+# Test the function with hand constructed datasets and bandwidths
+set.seed(100)
+n <- 100
+x <- seq(0, 1, length.out = n)
+x_new <- rnorm(n)
+h <- c(0.05, 0.5, 1)
+
+sapply(h, function(hi) {
+  f_new <- kern_density(x, hi, sort(x_new))
+  plot(sort(x_new), f_new, type="l",
+       main=paste("bandwidth =", hi), xlab="x_new", ylab="Kernel Density")
+})
+```
+
+**2.** CASL page 200, question 3
+
+If f is a convex function, we have the property 
+$$f(tb_1 + (1-t)b_2) \le tf(b_1) + (1-t)f(b_2).$$
+
+Similarly if g is a convex function, we have
+$$g(tb_1 + (1-t)b_2) \le tg(b_1) + (1-t)g(b_2).$$
+
+Suppose h(x) = f(x) + g(x), then 
+$$
+\begin{aligned}
+&h(tb_1 + (1-t)b_2) = f(tb_1 + (1-t)b_2) + g(tb_1 + (1-t)b_2)\\
+&\le  tf(b_1) + (1-t)f(b_2) + tg(b_1) + (1-t)g(b_2) = th(b_1) + (1-t)h(b_2).
+\end{aligned}
+$$
+
+So the sum of f and g is a convex function as well.
+
+**3.** CASL page 200, question 4
+
+First show the absolute value function is convex. 
+
+Suppose f(x) = |x|, then 
+
+$$
+\begin{aligned}
+f(tb_1 + (1-t)b_2) &= |tb_1 + (1-t)b_2|\\ 
+&\le |tb_1| + |(1-t)b_2| \text{ by triangle inequality}\\ 
+&= t|b_1| + (1-t)|b_2| \text{ as 0<t<1}\\
+&= tf(b_1) + (1-t)f(b_2)
+\end{aligned}
+$$
+
+So absolute value function f is a convex function. 
+
+According to the result from the last exercise, the sum of convex functions is also convex. We know an absolute value function |b_j| is convex, so l1-norm $||b||_1 = \sum_j |b_j|$, as the sum of a series of $|b_j|$, is convex as well. 
+
+**4.** CASL page 200, question 5
+
+The elastic objective function is 
+
+$$
+f(b;\lambda, \alpha) = \frac{1}{2n} ||y-Xb||^2_2 + \lambda \left((1-\alpha) \frac{1}{2} ||b||_2^2 + \alpha||b||_1\right)
+$$
+
+As $(y_i-X_{ij}b_j)^2$ is a convex function, then the sum $||y-Xb||^2_2 = \sum_i \sum_j (y_i-X_{ij}b_j)^2$ is convex function as well, as proven in qusetion 2. 
+
+Similarly, as $(b_j)^2$ is convex, then the sum $||b||_2^2 = \sum_j (b_j)^2$ is convex too.
+
+Moreover, it has already been proven in question 3 that $||b||_1$ is a convex function as well. 
+
+According to the definition of elastic net, n>0, $\lambda > 0$ and $\alpha \in [0,1]$, so the sum of the three parts of convex function 
+$$
+\frac{1}{2n} ||y-Xb||^2_2 + \lambda \left((1-\alpha) \frac{1}{2} ||b||_2^2 + \alpha||b||_1\right)
+$$
+is a convex function. 
+
+**5.** CASL page 200, question 6
+
+First, make a dataset. 
+
+```{r}
+library(bis557)
+library(Matrix)
+library(glmnet)
+
+# The dataset
+n <- 1000L
+p <- 5000L
+X <- matrix(rnorm(n * p), ncol = p)
+beta <- c(seq(1, 0.1, length.out=(10L)), rep(0, p - 10L))
+y <- X %*% beta + rnorm(n = n, sd = 0.15)
+```
+
+Then use glmnet to fit a lasso regression and check the KKT conditions for betas corresponding to the best lambda value (the lambda that minimize the mean squared error).
+
+```{r}
+# glmnet
+gfit <- cv.glmnet(X, y, alpha=1)
+lambda.min <- gfit$lambda.min
+lambda.min
+beta_hat <- gfit$glmnet.fit$beta[,which(gfit$lambda == gfit$lambda.min)]
+
+# Check KKT for beta from glmnet
+casl_lenet_check_kkt <- function(X, y, b, lambda) {
+  resids <- y - X %*% b
+s <- apply(X, 2, function(xj) crossprod(xj, resids)) / lambda / nrow(X)
+ (b == 0) & (abs(s) >= 1)
+}
+
+kkt.violat.glmnet <- casl_lenet_check_kkt(X,y,beta_hat, lambda.min)
+```
+
+Note that the optimal lambda chosen is 0.01073677.
+
+Next, implement a function lasso_reg_with_screening, that screen for the optimal beta for a given lambda. A series of functions are implemented before lasso_reg_with_screening to support that function. 
+
+```{r}
+# Implement screening function and related functions
+casl_until_soft_thresh <- function(a,b) {
+  a[abs(a) <= b] <- 0
+  a[a > 0] <- a[a > 0] - b
+  a[a < 0] <- a[a < 0] + b
+  a
+}
+  
+casl_lenet_update_beta <- function(X, y, lambda, alpha, b, W) {
+  WX <- W * X
+  WX2 <- W * X^2
+  Xb <- X %*% b
+  
+  for (i in seq_along(b)) {
+    Xb <- Xb - X[,i] * b[i]
+    b[i] <- casl_until_soft_thresh(sum(WX[,i,drop=FALSE] * (y- Xb)), lambda*alpha)
+    b[i] <- b[i] / (sum(WX2[,i]) + lambda * (1-alpha))
+    Xb <- Xb + X[,i] * b[i]
+  }
+  b
+}
+
+casl_lenet <- function(X, y, lambda, alpha=1, b=matrix(0, nrow=ncol(X), ncol=1), tol=1e-5, maxit=50, W=rep(1, length(y))/length(y)) {
+  for (j in seq_along(lambda)) {
+    if (j>1) {
+      b[,j] <- b[,j-1, drop=FALSE]
+    }
+    
+    for (i in seq(1:maxit)) {
+      b_old <- b[,j]
+      b[,j] <- casl_lenet_update_beta(X, y, lambda[j], alpha, b[,j], W)
+      if (all(abs(b[, j] - b_old) < tol)) {
+        break
+      }
+    }
+    if (i == maxit) {
+      warning("Function lenet did not converge")
+    }
+  }
+  b
+}
+
+casl_lenet_update_beta_kkt <- function(X, y, b, lambda, active_set, maxit=1000L) {
+  if (any(active_set)) {
+    b[active_set, ] <- casl_lenet(X[,active_set, drop=FALSE], 
+                                  y, lambda, 1, 
+                                  b[active_set, , drop=FALSE],
+                                  maxit = maxit)
+  }
+  
+  kkt_violations <- casl_lenet_check_kkt(X, y, b, lambda)
+  
+  while(any(kkt_violations)) {
+    active_set <- active_set | kkt_violations
+    b[active_set,] <- casl_lenet(X[,active_set, drop=FALSE], y, lambda, 1, b[active_set,,drop=FALSE], maxit=maxit)
+    kkt_violations <- casl_lenet_check_kkt(X, y, b, lambda)
+  }
+  
+  list(b=b, active_set=active_set)
+}
+
+lasso_reg_with_screening <- function(X, y, lambda, b=matrix(0, nrow=ncol(X), ncol=length(lambda)), maxit=10000L) {
+  active_set <- b[,1] != 0
+  lsu <- casl_lenet_update_beta_kkt(X, y, b[, 1, drop=FALSE],
+lambda[1], active_set, maxit)
+  b[,1] <- lsu$b
+  
+  for (i in seq_along(lambda)[-1]) 
+  {
+    lsu <- casl_lenet_update_beta_kkt(X, y, b[,i-1L, drop=FALSE], 
+                                      lambda[i], lsu$active_set, maxit)
+    b[,i] <- lsu$b
+  }
+ 
+  b
+}
+```
+
+Afterwards, the same X and y used for glmnet, and the optimal lambda from glmnet are passed into function lasso_reg_with_screening and yield the best estimation for betas. KKT conditions for those betas are checked as well. 
+
+```{r}
+# Check KKT for beta from lasso_reg_with_screening
+beta_screen.min <- lasso_reg_with_screening(X, y, lambda=lambda.min)
+kkt.violat.screen <- casl_lenet_check_kkt(X,y,beta_screen.min, lambda.min)
+```
+
+Then compare KKT conditions from glmnet and lasso_reg_with_screening.
+
+```{r}
+# Compare KKT conditions from glmnet and lasso_reg_with_screening
+sum(kkt.violat.glmnet==kkt.violat.screen)/length(kkt.violat.glmnet)
+```
+
+From above, 99.82% KKT conditions for implemented lasso_reg_with_screening function is consistant with the KKT conditions for glmnet. The algorithm of lasso_reg_with_screening is relatively accurate. 
