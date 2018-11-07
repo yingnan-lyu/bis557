@@ -43,7 +43,7 @@ kern_density <- function(x, h, x_new) {
 }
 ```
 
-Then generate a set of x from uniform distribution U(0,1). Use bandwidth 0.05, 0.5 and 1 respectively and plot the kernel density against x.
+Then generate a set of x from uniform distribution U(0,1). Use bandwidth 0.05, 0.5 and 1 respectively and plot the kernel density against x. The density of U(0,1) is overlaid to each plot using a red dashed line. 
 
 ```{r}
 # Test the function with hand constructed datasets and bandwidths
@@ -57,16 +57,18 @@ sapply(h, function(hi) {
   f_new <- kern_density(x, hi, sort(x_new))
   plot(sort(x_new), f_new, type="l",
        main=paste("bandwidth =", hi), xlab="x_new", ylab="Kernel Density")
+  curve(dunif(x), col='red', lty=2, add=TRUE)
 })
 ```
 
-Run another test using a set of x from normal distribution N(0,1). Use bandwidth 0.05, 0.5 and 1 respectively and plot the kernel density against x.
+Run another test using a set of x from normal distribution N(0,1). Use bandwidth 0.05, 0.5 and 1 respectively and plot the kernel density against x. The density of N(0,1) is overlaid to each plot using a red dashed line. 
 
 ```{r}
 # Test the function with hand constructed datasets and bandwidths
 set.seed(100)
 n <- 100
-x <- seq(0, 1, length.out = n)
+# x <- seq(0, 1, length.out = n)
+x <- rnorm(n)
 x_new <- rnorm(n)
 h <- c(0.05, 0.5, 1)
 
@@ -74,6 +76,7 @@ sapply(h, function(hi) {
   f_new <- kern_density(x, hi, sort(x_new))
   plot(sort(x_new), f_new, type="l",
        main=paste("bandwidth =", hi), xlab="x_new", ylab="Kernel Density")
+  curve(dnorm(x), col='red', lty=2, add=TRUE)
 })
 ```
 
@@ -163,8 +166,8 @@ beta_hat <- gfit$glmnet.fit$beta[,which(gfit$lambda == gfit$lambda.min)]
 # Check KKT for beta from glmnet
 casl_lenet_check_kkt <- function(X, y, b, lambda) {
   resids <- y - X %*% b
-s <- apply(X, 2, function(xj) crossprod(xj, resids)) / lambda / nrow(X)
- (b == 0) & (abs(s) >= 1)
+  s <- apply(X, 2, function(xj) crossprod(xj, resids)) / lambda / nrow(X)
+  (b == 0) & (abs(s) >= 1)
 }
 
 kkt.violat.glmnet <- casl_lenet_check_kkt(X,y,beta_hat, lambda.min)
