@@ -220,7 +220,7 @@ casl_lenet <- function(X, y, lambda, alpha=1, b=matrix(0, nrow=ncol(X), ncol=1),
   b
 }
 
-casl_lenet_update_beta_kkt <- function(X, y, b, lambda, active_set, maxit=1000L) {
+lasso_reg_update_beta_kkt <- function(X, y, b, lambda, active_set, maxit=1000L) {
   if (any(active_set)) {
     b[active_set, ] <- casl_lenet(X[,active_set, drop=FALSE], 
                                   y, lambda, 1, 
@@ -241,13 +241,13 @@ casl_lenet_update_beta_kkt <- function(X, y, b, lambda, active_set, maxit=1000L)
 
 lasso_reg_with_screening <- function(X, y, lambda, b=matrix(0, nrow=ncol(X), ncol=length(lambda)), maxit=10000L) {
   active_set <- b[,1] != 0
-  lsu <- casl_lenet_update_beta_kkt(X, y, b[, 1, drop=FALSE],
+  lsu <- lasso_reg_update_beta_kkt(X, y, b[, 1, drop=FALSE],
 lambda[1], active_set, maxit)
   b[,1] <- lsu$b
   
   for (i in seq_along(lambda)[-1]) 
   {
-    lsu <- casl_lenet_update_beta_kkt(X, y, b[,i-1L, drop=FALSE], 
+    lsu <- lasso_reg_update_beta_kkt(X, y, b[,i-1L, drop=FALSE], 
                                       lambda[i], lsu$active_set, maxit)
     b[,i] <- lsu$b
   }
