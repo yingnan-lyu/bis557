@@ -147,6 +147,7 @@ library(Matrix)
 library(glmnet)
 
 # The dataset
+set.seed(1)
 n <- 1000L
 p <- 5000L
 X <- matrix(rnorm(n * p), ncol = p)
@@ -160,115 +161,17 @@ Then use glmnet to fit a lasso regression and check the KKT conditions for betas
 # glmnet
 gfit <- cv.glmnet(X, y, alpha=1)
 lambda.min <- gfit$lambda.min
-lambda.min
 beta_hat <- gfit$glmnet.fit$beta[,which(gfit$lambda == gfit$lambda.min)]
 
 # Check KKT for beta from glmnet
-casl_lenet_check_kkt <- function(X, y, b, lambda) {
+lasso_reg_with_screening <- function(X, y, b, lambda) {
   resids <- y - X %*% b
   s <- apply(X, 2, function(xj) crossprod(xj, resids)) / lambda / nrow(X)
   (b == 0) & (abs(s) >= 1)
 }
 
-kkt.violat.glmnet <- casl_lenet_check_kkt(X,y,beta_hat, lambda.min)
+kkt.violat.glmnet <- lasso_reg_with_screening(X,y,beta_hat, lambda.min)
+sum(kkt.violat.glmnet)/length(kkt.violat.glmnet)
 ```
 
-Note that the optimal lambda chosen is 0.01073677.
-
-Next, implement a function lasso_reg_with_screening, that screen for the optimal beta for a given lambda. A series of functions are implemented before lasso_reg_with_screening to support that function. 
-
-```{r}
-# Implement screening function and related functions
-casl_until_soft_thresh <- function(a,b) {
-  a[abs(a) <= b] <- 0
-  a[a > 0] <- a[a > 0] - b
-  a[a < 0] <- a[a < 0] + b
-  a
-}
-  
-casl_lenet_update_beta <- function(X, y, lambda, alpha, b, W) {
-  WX <- W * X
-  WX2 <- W * X^2
-  Xb <- X %*% b
-  
-  for (i in seq_along(b)) {
-    Xb <- Xb - X[,i] * b[i]
-    b[i] <- casl_until_soft_thresh(sum(WX[,i,drop=FALSE] * (y- Xb)), lambda*alpha)
-    b[i] <- b[i] / (sum(WX2[,i]) + lambda * (1-alpha))
-    Xb <- Xb + X[,i] * b[i]
-  }
-  b
-}
-
-casl_lenet <- function(X, y, lambda, alpha=1, b=matrix(0, nrow=ncol(X), ncol=1), tol=1e-5, maxit=50, W=rep(1, length(y))/length(y)) {
-  for (j in seq_along(lambda)) {
-    if (j>1) {
-      b[,j] <- b[,j-1, drop=FALSE]
-    }
-    
-    for (i in seq(1:maxit)) {
-      b_old <- b[,j]
-      b[,j] <- casl_lenet_update_beta(X, y, lambda[j], alpha, b[,j], W)
-      if (all(abs(b[, j] - b_old) < tol)) {
-        break
-      }
-    }
-    if (i == maxit) {
-      warning("Function lenet did not converge")
-    }
-  }
-  b
-}
-
-lasso_reg_update_beta_kkt <- function(X, y, b, lambda, active_set, maxit=1000L) {
-  if (any(active_set)) {
-    b[active_set, ] <- casl_lenet(X[,active_set, drop=FALSE], 
-                                  y, lambda, 1, 
-                                  b[active_set, , drop=FALSE],
-                                  maxit = maxit)
-  }
-  
-  kkt_violations <- casl_lenet_check_kkt(X, y, b, lambda)
-  
-  while(any(kkt_violations)) {
-    active_set <- active_set | kkt_violations
-    b[active_set,] <- casl_lenet(X[,active_set, drop=FALSE], y, lambda, 1, b[active_set,,drop=FALSE], maxit=maxit)
-    kkt_violations <- casl_lenet_check_kkt(X, y, b, lambda)
-  }
-  
-  list(b=b, active_set=active_set)
-}
-
-lasso_reg_with_screening <- function(X, y, lambda, b=matrix(0, nrow=ncol(X), ncol=length(lambda)), maxit=10000L) {
-  active_set <- b[,1] != 0
-  lsu <- lasso_reg_update_beta_kkt(X, y, b[, 1, drop=FALSE],
-lambda[1], active_set, maxit)
-  b[,1] <- lsu$b
-  
-  for (i in seq_along(lambda)[-1]) 
-  {
-    lsu <- lasso_reg_update_beta_kkt(X, y, b[,i-1L, drop=FALSE], 
-                                      lambda[i], lsu$active_set, maxit)
-    b[,i] <- lsu$b
-  }
- 
-  b
-}
-```
-
-Afterwards, the same X and y used for glmnet, and the optimal lambda from glmnet are passed into function lasso_reg_with_screening and yield the best estimation for betas. KKT conditions for those betas are checked as well. 
-
-```{r}
-# Check KKT for beta from lasso_reg_with_screening
-beta_screen.min <- lasso_reg_with_screening(X, y, lambda=lambda.min)
-kkt.violat.screen <- casl_lenet_check_kkt(X,y,beta_screen.min, lambda.min)
-```
-
-Then compare KKT conditions from glmnet and lasso_reg_with_screening.
-
-```{r}
-# Compare KKT conditions from glmnet and lasso_reg_with_screening
-sum(kkt.violat.glmnet==kkt.violat.screen)/length(kkt.violat.glmnet)
-```
-
-From above, 99.82% KKT conditions for implemented lasso_reg_with_screening function is consistant with the KKT conditions for glmnet. The algorithm of lasso_reg_with_screening is relatively accurate. 
+Only 0.22% of beta returned by glmnet violated KKT condition. The betas from glmnet are relatively valid.  
