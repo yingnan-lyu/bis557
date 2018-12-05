@@ -57,6 +57,8 @@ sparse.matrix <- function(i, j, x, dims=NULL) {
   sparse.matrix(i=c$i, j=c$j, x=c$x)
 }
 
+
+
 #' Transpose a sparse matrix
 #'
 #' @description This function transposes a sparse matrix.
@@ -81,6 +83,18 @@ t.sparse.matrix <- function(a) {
   sparse.matrix(i=ta$i, j=ta$j, x=ta$x, dim=c(r,c))
 }
 
+
+
+`%*%.default` = .Primitive("%*%")  
+
+`%*%` = function(x,...){ 
+  UseMethod("%*%",x)
+}
+
+`%*%` <- function(x, y) {
+  UseMethod("%*%", x)
+}
+
 #' Multiply two sparse matrices
 #'
 #' @description This function multiplies two sparse matrices.
@@ -92,16 +106,6 @@ t.sparse.matrix <- function(a) {
 #' sm1 <- sparse.matrix(i = c(1, 2), j = c(1, 1), x = c(3, 1), dims = c(3, 2))
 #' sm3 <- sparse.matrix(i = rep(1, 3), j = 1:3, x = 1:3, dims = c(2, 3))
 #' @export
-`%*%.default` = .Primitive("%*%")  
-
-`%*%` = function(x,...){ 
-  UseMethod("%*%",x)
-}
-
-`%*%` <- function(x, y) {
-  UseMethod("%*%", x)
-}
-
 `%*%.sparse.matrix` <- function(a,b) {
   #UseMethod("%*%", a)
   # Check the type of b
