@@ -91,8 +91,17 @@ t.sparse.matrix <- function(a) {
 #' @examples
 #' sm1 <- sparse.matrix(i = c(1, 2), j = c(1, 1), x = c(3, 1), dims = c(3, 2))
 #' sm3 <- sparse.matrix(i = rep(1, 3), j = 1:3, x = 1:3, dims = c(2, 3))
-#' sm1 %*% sm3
 #' @export
+`%*%.default` = .Primitive("%*%")  
+
+`%*%` = function(x,...){ 
+  UseMethod("%*%",x)
+}
+
+`%*%` <- function(x, y) {
+  UseMethod("%*%", x)
+}
+
 `%*%.sparse.matrix` <- function(a,b) {
   #UseMethod("%*%", a)
   # Check the type of b

@@ -229,7 +229,17 @@ t.sparse.matrix <- function(a) {
 
 
 # Define a function %*% to multiply sparse matrix
-`%*%` <- function(a,b) {
+`%*%.default` = .Primitive("%*%")  
+
+`%*%` = function(x,...){ 
+  UseMethod("%*%",x)
+}
+
+`%*%` <- function(x, y) {
+  UseMethod("%*%", x)
+}
+
+`%*%.sparse.matrix` <- function(a,b) {
   #UseMethod("%*%", a)
   # Check the type of b
   if (!inherits(b, "sparse.matrix")) {
