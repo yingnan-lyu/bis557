@@ -4,10 +4,10 @@
 \alias{t.sparse.matrix}
 \title{Transpose a sparse matrix}
 \usage{
-\method{t}{sparse.matrix}(a)
+\method{t}{sparse.matrix}(x)
 }
 \arguments{
-\item{a}{a sparse matrix}
+\item{x}{a sparse matrix}
 }
 \value{
 A sparse matrix

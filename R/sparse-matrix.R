@@ -54,7 +54,19 @@ sparse.matrix <- function(i, j, x, dims=NULL) {
   c$x2[is.na(c$x2)] <- 0
   c$x <- c$x1 + c$x2
   c <- c[, c("i", "j", "x")]
-  sparse.matrix(i=c$i, j=c$j, x=c$x)
+  #sparse.matrix(i=c$i, j=c$j, x=c$x)
+  sm <- data.frame(i=c$i, j=c$j, x=c$x)
+  dims <- c(attr(a$i, "label"), attr(a$j, "label"))
+  
+  r <- dims[1]; c <- dims[2]
+  index <- data.frame(i=rep(1:r), j=rep(1:c, each=r))
+  sm <- merge(index, sm, by = c("i", "j"), all.x = TRUE, sort=FALSE)
+  sm <- sm[sm$x != 0 & !is.na(sm$x),]
+  
+  attr(sm$i, "label") <- r
+  attr(sm$j, "label") <- c
+  class(sm) <- c("sparse.matrix", class(sm))
+  sm
 }
 
 
@@ -62,16 +74,16 @@ sparse.matrix <- function(i, j, x, dims=NULL) {
 #' Transpose a sparse matrix
 #'
 #' @description This function transposes a sparse matrix.
-#' @param a a sparse matrix
+#' @param x a sparse matrix
 #' @return A sparse matrix
 #' @import stats MASS
 #' @examples
 #' sm0 <- sparse.matrix(i = c(1, 2), j = c(1, 1), x = c(1, 1))
 #' t(sm0)
 #' @export
-t.sparse.matrix <- function(a) {
+t.sparse.matrix <- function(x) {
   # swap i and j index
-  ta <- a
+  ta <- x
   names(ta) <- c('j', 'i', 'x')
   ta <- ta[,c('i', 'j', 'x')]
   
@@ -80,7 +92,18 @@ t.sparse.matrix <- function(a) {
   ta <- merge(index, ta, by = c("i", "j"), all.x = TRUE, sort=FALSE)
   ta <- ta[ta$x != 0 & !is.na(ta$x),]
   
-  sparse.matrix(i=ta$i, j=ta$j, x=ta$x, dim=c(r,c))
+  #sparse.matrix(i=ta$i, j=ta$j, x=ta$x, dim=c(r,c))
+  sm <- data.frame(i=ta$i, j=ta$j, x=ta$x)
+  dims <- c(r, c)
+  
+  index <- data.frame(i=rep(1:r), j=rep(1:c, each=r))
+  sm <- merge(index, sm, by = c("i", "j"), all.x = TRUE, sort=FALSE)
+  sm <- sm[sm$x != 0 & !is.na(sm$x),]
+  
+  attr(sm$i, "label") <- r
+  attr(sm$j, "label") <- c
+  class(sm) <- c("sparse.matrix", class(sm))
+  sm
 }
 
 
@@ -144,5 +167,17 @@ t.sparse.matrix <- function(a) {
   c <- c[c$x != 0 & !is.na(c$x),]
   c <- c[, c("i", "j", "x")]
   
-  sparse.matrix(i=c$i, j=c$j, x=c$x, dim=c(attr(a$i, "label"), attr(b$j, "label")))
+  #sparse.matrix(i=c$i, j=c$j, x=c$x, dim=c(attr(a$i, "label"), attr(b$j, "label")))
+  sm <- data.frame(i=c$i, j=c$j, x=c$x)
+  dims <- c(attr(a$i, "label"), attr(b$j, "label"))
+  
+  r <- dims[1]; c <- dims[2]
+  index <- data.frame(i=rep(1:r), j=rep(1:c, each=r))
+  sm <- merge(index, sm, by = c("i", "j"), all.x = TRUE, sort=FALSE)
+  sm <- sm[sm$x != 0 & !is.na(sm$x),]
+  
+  attr(sm$i, "label") <- r
+  attr(sm$j, "label") <- c
+  class(sm) <- c("sparse.matrix", class(sm))
+  sm
 }
