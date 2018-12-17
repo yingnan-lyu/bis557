@@ -1,0 +1,406 @@
+---
+title: "Homework 5"
+author: "Yingnan Lyu"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    self_contained: yes
+    toc: true
+---
+<!--
+%\VignetteEngine{knitr::rmarkdown}
+%\VignetteIndexEntry{The lasso regression vignette}
+%\VignetteEncoding{UTF-8}
+\usepackage[utf8]{Matrix}
+-->
+
+## Homework 5
+
+This vignette answers questions in homework 5 of BIS 557. 
+
+**1.** In class we used the LASSO to predict hand-writting characters in the MNIST data set. Increase the out-of-sample prediction accuracy by extracting predictive features from the images.
+
+First implement LASSO and calculate the out-of-sample prediction accuracy as in class. The minimum lambda is used for out-of-sample prediction. 
+
+```{r}
+# Do this before load keras
+# Sys.setenv(KERAS_BACKEND = "keras")
+# Sys.setenv(THEANO_FLAGS = "device=gpu,floatX=float32")
+library(keras)
+library(glmnet)
+library(doMC)
+
+registerDoMC()
+
+# The data, shuffled and split between train and test sets
+mnist <- dataset_mnist()
+x_train <- mnist$train$x
+y_train <- mnist$train$y
+x_test <- mnist$test$x
+y_test <- mnist$test$y
+
+x_train <- array_reshape(x_train, c(60000, 28^2))
+x_test <- array_reshape(x_test, c(10000, 28^2))
+y_train <- factor(y_train)
+y_test <- factor(y_test)
+
+s <- sample(seq_along(y_train), 1000) 
+fit <- cv.glmnet(x_train[s,], y_train[s], family = "multinomial")
+
+# Estimate out-of-sample prediction accuracy using minimum lambda as in class
+preds <- predict(fit$glmnet.fit, x_test, s = fit$lambda.min, 
+                 type = "class")
+
+t <- table(as.vector(preds), y_test)
+
+sum(diag(t)) / sum(t) # 0.8475
+```
+
+From above, the out-of-sample accuracy is `r sum(diag(t)) / sum(t)`.
+
+Then by using a smaller lambda, which is the minimum lambda minus 1 standard error, we decrease the degree of penalty and are getting more predictive features. 
+
+```{r}
+# Try to increase out-of-sample prediction accuracy
+# Estimate out-of-sample prediction accuracy using minimum lambda - 1se
+se <- fit$lambda.1se-fit$lambda.min
+lamda.minus.1se <- fit$lambda.min-se
+
+preds3 <- predict(fit$glmnet.fit, x_test, s = lamda.minus.1se, 
+                 type = "class")
+
+t3 <- table(as.vector(preds3), y_test)
+
+sum(diag(t3)) / sum(t3) # 0.8592
+```
+
+Then we have the out-of-sample prediction accuracy increased to `r sum(diag(t3)) / sum(t3)`. Including more predictive features have increased the out-of-sample prediction accuracy. 
+
+**2.** CASL Number 4 in Exercises 8.11.
+
+Adjust the kernel size, and any other parameters you think are useful, in the convolutional neural network for EMNIST in Section 8.10.4. Can you improve on the classification rate?
+
+Instead of EMNIST, MNIST dataset is used in this question. After data transformation, the convolution neutal network is conducted with the same parameters as in Section 8.10.4. The prediction accuracy is calculated as below. 
+
+```{r}
+# Reshape MNIST data
+Y_train <- data.frame(train_id="train", class=y_train, class_name=letters[as.numeric(y_train)])
+Y_valid <- data.frame(train_id="test", class=y_test, class_name=letters[as.numeric(y_test)])
+emnist <- rbind(Y_train, Y_valid)
+
+# Reshape x28
+x28 <- rbind(x_train, x_test)
+dim(x28) <- c(70000, 28, 28, 1)
+
+Y <- to_categorical(emnist$class, num_classes=26L)
+
+X <- t(apply(x28, 1, cbind))
+X_train <- X[emnist$train_id == "train",]
+dim(X_train) <- c(60000, 28, 28, 1)
+X_valid <- X[emnist$train_id != "train",]
+dim(X_valid) <- c(10000, 28, 28, 1)
+Y_train <- Y[emnist$train_id == "train",]
+Y_valid <- Y[emnist$train_id != "train",]
+
+# Build a keras model 
+model <- keras_model_sequential()
+model %>%
+layer_conv_2d(filters = 32, kernel_size = c(2,2),
+input_shape = c(28, 28, 1),
+padding = "same") %>%
+layer_activation(activation = "relu") %>%
+layer_conv_2d(filters = 32, kernel_size = c(2,2),
+padding = "same") %>%
+layer_activation(activation = "relu") %>%
+layer_max_pooling_2d(pool_size = c(2, 2)) %>%
+layer_dropout(rate = 0.5) %>%
+layer_conv_2d(filters = 32, kernel_size = c(2,2),
+padding = "same") %>%
+layer_activation(activation = "relu") %>%
+layer_conv_2d(filters = 32, kernel_size = c(2,2),
+padding = "same") %>%
+layer_activation(activation = "relu") %>%
+layer_max_pooling_2d(pool_size = c(2, 2)) %>%
+layer_dropout(rate = 0.5) %>%
+layer_flatten() %>%
+layer_dense(units = 128) %>%
+layer_activation(activation = "relu") %>%
+layer_dense(units = 128) %>%
+layer_activation(activation = "relu") %>%
+layer_dropout(rate = 0.5) %>%
+layer_dense(units = 26) %>%
+layer_activation(activation = "softmax")
+
+# Compiling and fitting a convolutional neural network
+model %>% compile(loss = 'categorical_crossentropy',
+                  optimizer = optimizer_rmsprop(),
+                  metrics = c('accuracy'))
+
+history <- model %>% 
+  fit(X_train, Y_train, epochs = 10, validation_data = list(X_valid, Y_valid))
+
+# Prediction accuracy
+#emnist$predict <- predict_classes(model, X)
+emnist$predict <- predict_classes(model, x28)
+#X$predict <- predict_classes(model, X)
+tapply(emnist$predict == emnist$class, emnist$train_id,
+mean) 
+```
+
+Then all kernel sizes are adjusted to 2.5, while the number of epoches adjusted to 8. The prediction accuracy has increased after the adjustment. 
+
+```{r}
+# Build a keras model 
+model <- keras_model_sequential()
+model %>%
+layer_conv_2d(filters = 32, kernel_size = c(2.5,2.5),
+input_shape = c(28, 28, 1),
+padding = "same") %>%
+layer_activation(activation = "relu") %>%
+layer_conv_2d(filters = 32, kernel_size = c(2.5,2.5),
+padding = "same") %>%
+layer_activation(activation = "relu") %>%
+layer_max_pooling_2d(pool_size = c(2, 2)) %>%
+layer_dropout(rate = 0.5) %>%
+layer_conv_2d(filters = 32, kernel_size = c(2.5,2.5),
+padding = "same") %>%
+layer_activation(activation = "relu") %>%
+layer_conv_2d(filters = 32, kernel_size = c(2.5,2.5),
+padding = "same") %>%
+layer_activation(activation = "relu") %>%
+layer_max_pooling_2d(pool_size = c(2, 2)) %>%
+layer_dropout(rate = 0.5) %>%
+layer_flatten() %>%
+layer_dense(units = 128) %>%
+layer_activation(activation = "relu") %>%
+layer_dense(units = 128) %>%
+layer_activation(activation = "relu") %>%
+layer_dropout(rate = 0.5) %>%
+layer_dense(units = 26) %>%
+layer_activation(activation = "softmax")
+
+# Compiling and fitting a convolutional neural network
+model %>% compile(loss = 'categorical_crossentropy',
+                  optimizer = optimizer_rmsprop(),
+                  metrics = c('accuracy'))
+
+history <- model %>% 
+  fit(X_train, Y_train, epochs = 8, validation_data = list(X_valid, Y_valid))
+
+# Prediction accuracy
+#emnist$predict <- predict_classes(model, X)
+emnist$predict <- predict_classes(model, x28)
+#X$predict <- predict_classes(model, X)
+tapply(emnist$predict == emnist$class, emnist$train_id,
+mean) 
+```
+
+
+**3.** CASL NUmber 8 in Exercises 8.11.
+
+Write a function that uses mean absolute deviation as a loss function, instead of mean squared error. Test the use of this function with a simulation containing several outliers. How well do neural networks and SGD perform when using robust techniques?
+
+Instead of using mean squared error $MSE = \frac{\sum (x_i - \overline x)^2}{n}$, the following algorithms use mean absolute deviation $MAD = \frac{\sum |x_i - \overline x|}{n}$ as the loss function. 
+
+Let $l=|y-a|$.The deravitive of the MAD loss function with respect to the activation is 
+$$\frac{d}{da}|l| = \frac{l}{|l|} \frac{dl}{da} = \frac{y-a}{|y-a|} (-1) = \frac{a-y}{|y-a|}.$$
+
+The implementation of this new loss function is below. 
+
+```{r}
+# Derivative of the mean absolute deviation (MAD) function.
+casl_util_mse_p <- function(y, a)
+{
+  (a - y)/abs(y - a)
+}
+```
+
+Then implement the neural networks with SGD, as in textbook. 
+
+```{r}
+# Create list of weights to describe a dense neural network.
+casl_nn_make_weights <-
+function(sizes)
+{
+  L <- length(sizes) - 1L
+  weights <- vector("list", L)
+  for (j in seq_len(L))
+  {
+    w <- matrix(rnorm(sizes[j] * sizes[j + 1L]),
+    ncol = sizes[j],
+    nrow = sizes[j + 1L])
+    weights[[j]] <- list(w=w,
+    b=rnorm(sizes[j + 1L]))
+  }
+  weights
+}
+
+# Apply a rectified linear unit (ReLU) to a vector/matrix.
+casl_util_ReLU <- function(v)
+{
+  v[v < 0] <- 0
+  v
+}
+
+# Apply derivative of the rectified linear unit (ReLU).
+casl_util_ReLU_p <- function(v)
+{
+  p <- v * 0
+  p[v > 0] <- 1
+  p
+}
+
+# Apply forward propagation to a set of NN weights and biases.
+casl_nn_forward_prop <- function(x, weights, sigma)
+{
+  L <- length(weights)
+  z <- vector("list", L)
+  a <- vector("list", L)
+  for (j in seq_len(L))
+  {
+    a_j1 <- if(j == 1) x else a[[j - 1L]]
+    z[[j]] <- weights[[j]]$w %*% a_j1 + weights[[j]]$b
+    a[[j]] <- if (j != L) sigma(z[[j]]) else z[[j]]
+  }
+  list(z=z, a=a)
+}
+
+# Apply backward propagation algorithm.
+casl_nn_backward_prop <- function(x, y, weights, f_obj, sigma_p, f_p)
+{
+  z <- f_obj$z; a <- f_obj$a
+  L <- length(weights)
+  grad_z <- vector("list", L)
+  grad_w <- vector("list", L)
+  for (j in rev(seq_len(L)))
+    {
+    if (j == L)
+    {
+      grad_z[[j]] <- f_p(y, a[[j]])
+    } else {
+      grad_z[[j]] <- (t(weights[[j + 1]]$w) %*% 
+                        grad_z[[j + 1]]) * sigma_p(z[[j]])
+    }
+    a_j1 <- if(j == 1) x else a[[j - 1L]]
+    grad_w[[j]] <- grad_z[[j]] %*% t(a_j1)
+  }
+  list(grad_z=grad_z, grad_w=grad_w)
+}
+```
+
+
+```{r}
+# Apply stochastic gradient descent (SGD) to estimate NN.
+casl_nn_sgd <- function(X, y, sizes, epochs, eta, weights=NULL)
+{
+  if (is.null(weights))
+  {
+    weights <- casl_nn_make_weights(sizes)
+  }
+  for (epoch in seq_len(epochs))
+  {
+    for (i in seq_len(nrow(X)))
+    {
+      f_obj <- casl_nn_forward_prop(X[i,], weights,
+      casl_util_ReLU)
+      b_obj <- casl_nn_backward_prop(X[i,], y[i,], weights,
+      f_obj, casl_util_ReLU_p, casl_util_mse_p)
+      
+      for (j in seq_along(b_obj))
+      {
+        weights[[j]]$b <- weights[[j]]$b -
+        eta * b_obj$grad_z[[j]]
+        weights[[j]]$w <- weights[[j]]$w -
+        eta * b_obj$grad_w[[j]]
+      }
+    }
+  }
+  weights
+}
+
+# Predict values from a training neural network.
+casl_nn_predict <- function(weights, X_test)
+{
+  p <- length(weights[[length(weights)]]$b)
+  y_hat <- matrix(0, ncol = p, nrow = nrow(X_test))
+  for (i in seq_len(nrow(X_test)))
+  {
+    a <- casl_nn_forward_prop(X_test[i,], weights,
+    casl_util_ReLU)$a
+    y_hat[i, ] <- a[[length(a)]]
+  }
+  y_hat
+}
+```
+
+Test the code on a small dataset with a one column input X and one hidden layer with 25 node. Besides, add several outliers to this dataset and predict y on the new dataset as well. 
+
+```{r}
+# The dataset without obvious outliers.
+X <- matrix(runif(1000, min=-1, max=1), ncol=1)
+y <- X[,1,drop = FALSE]^2 + rnorm(1000, sd = 0.1)
+weights <- casl_nn_sgd(X, y, sizes=c(1, 25, 1), epochs=25, eta=0.01)
+y_pred <- casl_nn_predict(weights, X)
+
+df <- data.frame(X, y, y_pred)
+library(ggplot2)
+ggplot(df, aes(X)) + geom_point(aes(y=y), size=0.5) + geom_line(aes(y=y_pred), size=1, colour="red") + ggtitle("Simulated data with SGD predictions")
+
+# Make data with several outliers
+yo <- y
+yo[c(200, 400, 600, 800)] <- yo[c(200, 400, 600, 800)] + c(1.5, 1.67, 2.45, 4.78)
+weights <- casl_nn_sgd(X, yo, sizes=c(1, 25, 1), epochs=25, eta=0.01)
+yo_pred <- casl_nn_predict(weights, X)
+
+dfo <- data.frame(X, y, y_pred)
+ggplot(dfo, aes(X)) + geom_point(aes(y=yo), size=0.5) + geom_line(aes(y=yo_pred), size=1, colour="red") + ggtitle("Simulated data with outliers with SGD predictions")
+```
+
+From the plots above, we could see that the neural network with MAD loss function work well with datasets both with and without outliers. 
+
+In addtional, we perform a gradient check for the dense NN code for both datasets. 
+
+```{r}
+# Perform a gradient check for the dense NN code.
+casl_nn_grad_check <-
+  function(X, y, weights, h=0.0001)
+  {
+  max_diff <- 0
+  for (level in seq_along(weights))
+  {
+    for (id in seq_along(weights[[level]]$w))
+    {
+      grad <- rep(0, nrow(X))
+      for (i in seq_len(nrow(X)))
+      {
+        f_obj <- casl_nn_forward_prop(X[i, ], weights, casl_util_ReLU)
+        b_obj <- casl_nn_backward_prop(X[i, ], y[i, ], weights,
+        f_obj, casl_util_ReLU_p,
+        casl_util_mse_p)
+        grad[i] <- b_obj$grad_w[[level]][id]
+      }
+      w2 <- weights
+      w2[[level]]$w[id] <- w2[[level]]$w[id] + h
+      f_h_plus <- 0.5 * (casl_nn_predict(w2, X) - y)^2
+      w2[[level]]$w[id] <- w2[[level]]$w[id] - 2 * h
+      f_h_minus <- 0.5 * (casl_nn_predict(w2, X) - y)^2
+      grad_emp <- sum((f_h_plus - f_h_minus) / (2 * h))
+      max_diff <- max(max_diff,
+      abs(sum(grad) - grad_emp))
+    }
+  }
+  max_diff
+}
+
+# Gradients for the datasets without outliers                       
+weights <- casl_nn_sgd(X, y, sizes=c(1, 5, 5, 1), epochs=1,
+eta=0.01)
+casl_nn_grad_check(X, y, weights)
+
+# Gradients for the datasets with outliers  
+weights <- casl_nn_sgd(X, yo, sizes=c(1, 5, 5, 1), epochs=1,
+eta=0.01)
+casl_nn_grad_check(X, yo, weights)
+```
+
+From above, the gradients is similar for both datasets. So our neutal network works well with the dataset with outliers. 
