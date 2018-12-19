@@ -80,7 +80,7 @@ Then we have the out-of-sample prediction accuracy increased to `r sum(diag(t3))
 
 Adjust the kernel size, and any other parameters you think are useful, in the convolutional neural network for EMNIST in Section 8.10.4. Can you improve on the classification rate?
 
-Instead of EMNIST, MNIST dataset is used in this question. After data transformation, the convolution neutal network is conducted with the same parameters as in Section 8.10.4. The prediction accuracy is calculated as below. 
+Instead of EMNIST, MNIST dataset is used in this question (as checked with Prof Kane, I used MNIST dataset instead here). After data transformation, the convolution neutal network is conducted with the same parameters as in Section 8.10.4. The prediction accuracy is calculated as below. 
 
 ```{r}
 # Reshape MNIST data
@@ -92,13 +92,15 @@ emnist <- rbind(Y_train, Y_valid)
 x28 <- rbind(x_train, x_test)
 dim(x28) <- c(70000, 28, 28, 1)
 
-Y <- to_categorical(emnist$class, num_classes=26L)
-
+# Split X to train and validation sets
 X <- t(apply(x28, 1, cbind))
 X_train <- X[emnist$train_id == "train",]
 dim(X_train) <- c(60000, 28, 28, 1)
 X_valid <- X[emnist$train_id != "train",]
 dim(X_valid) <- c(10000, 28, 28, 1)
+
+# Split Y to train and validation sets
+Y <- to_categorical(emnist$class, num_classes=26L)
 Y_train <- Y[emnist$train_id == "train",]
 Y_valid <- Y[emnist$train_id != "train",]
 
@@ -142,12 +144,11 @@ history <- model %>%
 # Prediction accuracy
 #emnist$predict <- predict_classes(model, X)
 emnist$predict <- predict_classes(model, x28)
-#X$predict <- predict_classes(model, X)
 tapply(emnist$predict == emnist$class, emnist$train_id,
 mean) 
 ```
 
-Then all kernel sizes are adjusted to 2.5, while the number of epoches adjusted to 8. The prediction accuracy has increased after the adjustment. 
+Then all kernel sizes are adjusted to 2.5, while the number of epoches adjusted to 7. The prediction accuracy has increased after the adjustment. 
 
 ```{r}
 # Build a keras model 
@@ -185,12 +186,11 @@ model %>% compile(loss = 'categorical_crossentropy',
                   metrics = c('accuracy'))
 
 history <- model %>% 
-  fit(X_train, Y_train, epochs = 8, validation_data = list(X_valid, Y_valid))
+  fit(X_train, Y_train, epochs = 6, validation_data = list(X_valid, Y_valid))
 
 # Prediction accuracy
 #emnist$predict <- predict_classes(model, X)
 emnist$predict <- predict_classes(model, x28)
-#X$predict <- predict_classes(model, X)
 tapply(emnist$predict == emnist$class, emnist$train_id,
 mean) 
 ```
